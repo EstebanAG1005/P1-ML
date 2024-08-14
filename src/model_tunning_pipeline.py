@@ -55,7 +55,8 @@ early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_wei
 history = pipeline.fit(X_train, y_train, model__validation_data=(X_test, y_test), model__callbacks=[early_stopping])
 
 # Guardar el modelo entrenado con regularización
-pipeline.named_steps['model'].model_.save('models/nn_model_tuned.h5')
+# Por esta línea
+pipeline.named_steps['model'].model_.save('models/nn_model_tuned.keras')
 
 # Predicciones y evaluación
 y_pred = pipeline.predict(X_test)

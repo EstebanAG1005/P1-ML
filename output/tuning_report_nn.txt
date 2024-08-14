@@ -1,0 +1,1 @@
+RMSE después de ajuste: 36422.49891868104

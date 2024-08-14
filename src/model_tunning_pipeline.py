@@ -6,8 +6,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_squared_error
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
+from tensorflow.keras.layers import Dense, Dropout, Input
+from scikeras.wrappers import KerasRegressor
 from tensorflow.keras.callbacks import EarlyStopping
 import matplotlib.pyplot as plt
 import os
@@ -15,7 +15,8 @@ import os
 # Función para crear el modelo de Keras
 def create_model():
     model = Sequential([
-        Dense(128, activation='relu', input_shape=(5,)),  # Ajusta según las características
+        Input(shape=(5,)),  # Ajusta según las características
+        Dense(128, activation='relu'),
         Dropout(0.3),
         Dense(64, activation='relu'),
         Dropout(0.3),
@@ -29,7 +30,7 @@ def create_model():
 pipeline = Pipeline([
     ('imputer', SimpleImputer(strategy='mean')),  # Imputación de valores nulos
     ('scaler', StandardScaler()),  # Estandarización de características
-    ('model', KerasRegressor(build_fn=create_model, epochs=200, batch_size=32, verbose=0))  # Modelo
+    ('model', KerasRegressor(model=create_model, epochs=200, batch_size=32, verbose=0))  # Modelo
 ])
 
 # Crear directorios para guardar modelos si no existen
@@ -49,12 +50,12 @@ y = train_data[target]
 # División de datos en conjuntos de entrenamiento y prueba
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Entrenar el pipeline con early stopping
+# Entrenar todo el pipeline y capturar el historial del entrenamiento
 early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-pipeline.named_steps['model'].fit(X_train, y_train, validation_data=(X_test, y_test), callbacks=[early_stopping])
+history = pipeline.fit(X_train, y_train, model__validation_data=(X_test, y_test), model__callbacks=[early_stopping])
 
 # Guardar el modelo entrenado con regularización
-pipeline.named_steps['model'].model.save('models/nn_model_tuned.h5')
+pipeline.named_steps['model'].model_.save('models/nn_model_tuned.h5')
 
 # Predicciones y evaluación
 y_pred = pipeline.predict(X_test)
@@ -66,10 +67,9 @@ with open('reports/tuning_report_nn.txt', 'w') as f:
     f.write(f'RMSE después de ajuste: {rmse_tuned}\n')
 
 # Gráfica de la pérdida durante el entrenamiento
-history = pipeline.named_steps['model'].model.history
 plt.figure(figsize=(10, 6))
-plt.plot(history.history['loss'], label='Pérdida de entrenamiento')
-plt.plot(history.history['val_loss'], label='Pérdida de validación')
+plt.plot(history.named_steps['model'].history_['loss'], label='Pérdida de entrenamiento')
+plt.plot(history.named_steps['model'].history_['val_loss'], label='Pérdida de validación')
 plt.title('Pérdida durante el entrenamiento (con ajuste)')
 plt.xlabel('Época')
 plt.ylabel('Pérdida')

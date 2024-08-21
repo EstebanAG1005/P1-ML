@@ -1,0 +1,15 @@
+version: '1.0'
+
+services:
+  AI:
+    image: mlops
+    restart: always
+    working_dir: /proyect
+    volumes:
+      - ./reports:/reports
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - driver: nvidia
+#              count: all
